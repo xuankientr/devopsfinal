@@ -148,7 +148,7 @@ npm run dev           # Start both frontend and backend
 
 Run the health check endpoint:
 ```bash
-curl https://your-backend.onrender.com/api/health
+curl https://devopsfinal1.onrender.com/api/health
 ```
 
 ## 📱 API Endpoints
@@ -178,6 +178,20 @@ curl https://your-backend.onrender.com/api/health
 3. Make your changes
 4. Push to your branch
 5. Create a Pull Request
+
+## 🔗 Live URLs
+
+### Production Deployment
+- **Frontend**: https://devopsfinal-frontend1.onrender.com
+- **Backend API**: https://devopsfinal1.onrender.com
+- **API Health Check**: https://devopsfinal1.onrender.com/api/health
+
+### API Endpoints
+- **Profile**: https://devopsfinal1.onrender.com/api/profile
+- **Skills**: https://devopsfinal1.onrender.com/api/skills
+- **Projects**: https://devopsfinal1.onrender.com/api/projects
+- **Blog**: https://devopsfinal1.onrender.com/api/blog
+- **Testimonials**: https://devopsfinal1.onrender.com/api/testimonials
 
 ## 📄 License
 

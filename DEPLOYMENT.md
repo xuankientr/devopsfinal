@@ -42,14 +42,14 @@ This guide will walk you through deploying your landing page to Render with auto
 
 5. Click **"Create Web Service"**
 6. Wait for deployment to complete
-7. **Copy your backend URL** (e.g., `https://landing-page-backend.onrender.com`)
+7. **Copy your backend URL** (e.g., `https://devopsfinal1.onrender.com`)
 
 ## 🎨 Step 3: Deploy Frontend
 
 1. In Render Dashboard, click **"New"** → **"Static Site"**
 2. Connect your GitHub repository
 3. Configure the site:
-   - **Name**: `landing-page-frontend`
+   - **Name**: `devopsfinal-frontend1`
    - **Root Directory**: `frontend`
    - **Branch**: `main`
    - **Build Command**: `npm install && npm run build`
@@ -65,8 +65,8 @@ This guide will walk you through deploying your landing page to Render with auto
 
 1. **Test Backend**:
    ```bash
-   curl https://your-backend-name.onrender.com/api/health
-   curl https://your-backend-name.onrender.com/api/message
+   curl https://devopsfinal1.onrender.com/api/health
+   curl https://devopsfinal1.onrender.com/api/message
    ```
 
 2. **Test Frontend**:
@@ -109,7 +109,7 @@ NODE_ENV=production
 
 ### Frontend Service
 ```
-VITE_BACKEND_URL=https://your-backend.onrender.com
+VITE_BACKEND_URL=https://devopsfinal1.onrender.com
 ```
 
 ## 📈 Monitoring

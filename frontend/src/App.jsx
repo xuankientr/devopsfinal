@@ -6,14 +6,16 @@ function App() {
   const [message, setMessage] = useState('Loading...');
   const [error, setError] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [profileData, setProfileData] = useState(null);
+  const [contactInfo, setContactInfo] = useState(null);
 
   useEffect(() => {
     // Animation trigger
     setIsVisible(true);
 
-    // Fetch message from backend
     const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
 
+    // Fetch welcome message
     fetch(`${backendUrl}/api/message`)
       .then(res => {
         if (!res.ok) {
@@ -28,6 +30,26 @@ function App() {
         console.error('Error fetching message:', err);
         setError('Backend connection failed');
         setMessage('Welcome to my profile!');
+      });
+
+    // Fetch profile data
+    fetch(`${backendUrl}/api/profile`)
+      .then(res => res.json())
+      .then(data => {
+        setProfileData(data);
+      })
+      .catch(err => {
+        console.error('Error fetching profile:', err);
+      });
+
+    // Fetch contact info
+    fetch(`${backendUrl}/api/contact-info`)
+      .then(res => res.json())
+      .then(data => {
+        setContactInfo(data);
+      })
+      .catch(err => {
+        console.error('Error fetching contact info:', err);
       });
   }, []);
 
@@ -91,9 +113,12 @@ function App() {
             <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face"
                  alt="Profile" />
           </div>
-          <h1 className="hero-title">John Developer</h1>
-          <p className="hero-subtitle">Full Stack Developer & DevOps Engineer</p>
-          <p className="hero-version">🚀 Version 1.2.0 - Auto-Deploy Testing!</p>
+          <h1 className="hero-title">{profileData?.name || 'Loading...'}</h1>
+          <p className="hero-subtitle">{profileData?.title || 'Full Stack Developer & DevOps Engineer'}</p>
+          <p className="hero-version">🚀 Version 1.3.0 - API Updated!</p>
+          {profileData?.location && (
+            <p className="hero-location">📍 {profileData.location}</p>
+          )}
           <p className="hero-message">{message}</p>
           {error && <p className="error-message">{error}</p>}
 

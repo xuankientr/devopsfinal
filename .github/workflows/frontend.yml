@@ -57,7 +57,7 @@ jobs:
       - name: 🏗️ Build application
         run: npm run build
         env:
-          VITE_BACKEND_URL: https://devopsfinal-backend.onrender.com
+          VITE_BACKEND_URL: https://devopsfinal1.onrender.com
 
       - name: 🧪 Test build output
         run: |
