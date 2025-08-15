@@ -61,10 +61,20 @@ app.get('/api/message', async (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
-    message: 'Backend is running perfectly!',
+    message: 'Backend is running perfectly! Auto-deploy test active 🚀',
     timestamp: new Date().toISOString(),
     version: '1.1.0',
     environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Auto-deploy test endpoint
+app.get('/api/test-autodeploy', (req, res) => {
+  res.json({
+    message: 'Auto-deploy test successful! 🎉',
+    timestamp: new Date().toISOString(),
+    commit: 'Testing GitHub Actions auto-deployment',
+    status: 'deployed'
   });
 });
 
