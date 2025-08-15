@@ -1,0 +1,169 @@
+name: 🧪 Test Auto-Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/test-deployment.yml'
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of deployment test'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+        - full
+        - backend-only
+        - frontend-only
+
+jobs:
+  pre-deploy-test:
+    name: 🔍 Pre-Deploy Validation
+    runs-on: ubuntu-latest
+    
+    outputs:
+      backend-changed: ${{ steps.changes.outputs.backend }}
+      frontend-changed: ${{ steps.changes.outputs.frontend }}
+      
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          
+      - name: 🔍 Detect changes
+        id: changes
+        run: |
+          echo "Detecting changes in last commit..."
+          
+          if git diff --name-only HEAD~1 HEAD | grep -q "^backend/"; then
+            echo "backend=true" >> $GITHUB_OUTPUT
+            echo "✅ Backend changes detected"
+          else
+            echo "backend=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No backend changes"
+          fi
+          
+          if git diff --name-only HEAD~1 HEAD | grep -q "^frontend/"; then
+            echo "frontend=true" >> $GITHUB_OUTPUT
+            echo "✅ Frontend changes detected"
+          else
+            echo "frontend=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No frontend changes"
+          fi
+          
+      - name: 📊 Change Summary
+        run: |
+          echo "📋 Deployment Plan:"
+          echo "Backend changes: ${{ steps.changes.outputs.backend }}"
+          echo "Frontend changes: ${{ steps.changes.outputs.frontend }}"
+          echo "Test type: ${{ github.event.inputs.test_type || 'auto' }}"
+
+  test-backend-deploy:
+    name: 🚀 Test Backend Auto-Deploy
+    needs: pre-deploy-test
+    runs-on: ubuntu-latest
+    if: needs.pre-deploy-test.outputs.backend-changed == 'true' || github.event.inputs.test_type == 'backend-only' || github.event.inputs.test_type == 'full'
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+          
+      - name: 📦 Install dependencies
+        run: cd backend && npm ci
+        
+      - name: 🧪 Quick test before deploy
+        run: |
+          cd backend
+          echo "Testing backend before deployment..."
+          node -c index.js
+          echo "✅ Backend syntax check passed"
+          
+      - name: 🚀 Simulate Deploy Trigger
+        run: |
+          echo "🎯 Triggering backend deployment..."
+          echo "Repository: ${{ github.repository }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo ""
+          echo "🔗 Render should detect this push and start deploying"
+          echo "📊 Monitor at: https://dashboard.render.com"
+          
+      - name: ⏳ Wait for Deploy Start
+        run: |
+          echo "⏳ Waiting 60 seconds for deployment to initialize..."
+          sleep 60
+          echo "✅ Deployment should be starting now"
+
+  test-frontend-deploy:
+    name: 🎨 Test Frontend Auto-Deploy  
+    needs: pre-deploy-test
+    runs-on: ubuntu-latest
+    if: needs.pre-deploy-test.outputs.frontend-changed == 'true' || github.event.inputs.test_type == 'frontend-only' || github.event.inputs.test_type == 'full'
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: ⚛️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+          
+      - name: 📦 Install dependencies
+        run: cd frontend && npm ci
+        
+      - name: 🏗️ Test build
+        run: |
+          cd frontend
+          echo "Testing frontend build..."
+          npm run build
+          echo "✅ Frontend build successful"
+          
+      - name: 🚀 Simulate Deploy Trigger
+        run: |
+          echo "🎯 Triggering frontend deployment..."
+          echo "Repository: ${{ github.repository }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo ""
+          echo "🔗 Render should detect this push and start deploying"
+          echo "📊 Monitor at: https://dashboard.render.com"
+
+  post-deploy-validation:
+    name: ✅ Post-Deploy Validation
+    needs: [test-backend-deploy, test-frontend-deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: 📊 Deployment Status
+        run: |
+          echo "🎯 Auto-Deploy Test Summary:"
+          echo "================================"
+          echo "Repository: ${{ github.repository }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Author: ${{ github.actor }}"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Run ID: ${{ github.run_id }}"
+          echo ""
+          echo "📋 Jobs Status:"
+          echo "Backend Deploy: ${{ needs.test-backend-deploy.result }}"
+          echo "Frontend Deploy: ${{ needs.test-frontend-deploy.result }}"
+          echo ""
+          echo "🔗 Next Steps:"
+          echo "1. Check Render dashboard for actual deployment status"
+          echo "2. Test deployed endpoints manually"
+          echo "3. Verify auto-deploy is working correctly"
+          echo ""
+          echo "📊 Render Dashboard: https://dashboard.render.com"

@@ -81,12 +81,34 @@ jobs:
           echo "📍 Repository: ${{ github.repository }}"
           echo "📝 Commit: ${{ github.sha }}"
           echo "👤 Author: ${{ github.actor }}"
+          echo "⏰ Time: $(date)"
           echo ""
           echo "🔗 Render will auto-deploy from this commit"
           echo "📊 Monitor deployment at: https://dashboard.render.com"
+
+      - name: 🧪 Wait and Test Deployment
+        run: |
+          echo "⏳ Waiting for Render deployment to complete..."
+          echo "This may take 5-10 minutes for the first deploy"
+
+          # Wait a bit for deployment to start
+          sleep 30
+
+          echo "🔍 Deployment should be starting now"
+          echo "Check your Render dashboard for real-time status"
+
+      - name: 📊 Deployment Summary
+        run: |
+          echo "✅ Deployment Summary:"
+          echo "   - Repository: ${{ github.repository }}"
+          echo "   - Commit SHA: ${{ github.sha }}"
+          echo "   - Branch: ${{ github.ref_name }}"
+          echo "   - Author: ${{ github.actor }}"
+          echo "   - Workflow: ${{ github.workflow }}"
+          echo "   - Run ID: ${{ github.run_id }}"
           echo ""
-          echo "✅ Deployment configuration:"
-          echo "   - Build Command: npm install"
-          echo "   - Start Command: npm start"
-          echo "   - Root Directory: backend"
-          echo "   - Environment: Node.js"
+          echo "🎯 Next Steps:"
+          echo "1. Check Render dashboard for deployment status"
+          echo "2. Test the deployed API endpoints"
+          echo "3. Verify database connectivity"
+          echo "4. Monitor application logs"
