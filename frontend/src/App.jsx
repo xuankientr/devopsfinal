@@ -93,6 +93,7 @@ function App() {
           </div>
           <h1 className="hero-title">John Developer</h1>
           <p className="hero-subtitle">Full Stack Developer & DevOps Engineer</p>
+          <p className="hero-version">🚀 Version 1.1.0 - CI/CD Ready!</p>
           <p className="hero-message">{message}</p>
           {error && <p className="error-message">{error}</p>}
 

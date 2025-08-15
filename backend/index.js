@@ -59,7 +59,13 @@ app.get('/api/message', async (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Backend is running' });
+  res.json({
+    status: 'OK',
+    message: 'Backend is running perfectly!',
+    timestamp: new Date().toISOString(),
+    version: '1.1.0',
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // Profile API endpoints
