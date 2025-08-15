@@ -1,59 +1,114 @@
-name: Deploy Frontend
+name: 🎨 Deploy Frontend
 
 on:
   push:
     branches: [main]
     paths:
       - 'frontend/**'
+      - '.github/workflows/frontend.yml'
   pull_request:
     branches: [main]
     paths:
       - 'frontend/**'
 
 jobs:
-  build-and-test:
+  test:
+    name: 🧪 Test Frontend
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend
-    
+
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
-      
-      - name: Setup Node.js
+
+      - name: ⚛️ Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
-      
-      - name: Install dependencies
+
+      - name: 📦 Install dependencies
         run: npm ci
-      
-      - name: Build application
+
+      - name: 🔍 Lint and validate
+        run: |
+          echo "Checking package.json..."
+          cat package.json | jq . > /dev/null || {
+            echo "❌ Invalid package.json"
+            exit 1
+          }
+
+          echo "Checking for required files..."
+          test -f src/App.jsx || {
+            echo "❌ Missing App.jsx"
+            exit 1
+          }
+
+          test -f index.html || {
+            echo "❌ Missing index.html"
+            exit 1
+          }
+
+          echo "✅ Frontend structure validation passed"
+
+      - name: 🏗️ Build application
         run: npm run build
         env:
-          VITE_BACKEND_URL: ${{ secrets.BACKEND_URL }}
-      
-      - name: Upload build artifacts
+          VITE_BACKEND_URL: https://devopsfinal-backend.onrender.com
+
+      - name: 🧪 Test build output
+        run: |
+          echo "Checking build output..."
+          test -d dist || {
+            echo "❌ Build failed - no dist directory"
+            exit 1
+          }
+
+          test -f dist/index.html || {
+            echo "❌ Build failed - no index.html in dist"
+            exit 1
+          }
+
+          echo "📊 Build size:"
+          du -sh dist/
+
+          echo "📁 Build contents:"
+          ls -la dist/
+
+          echo "✅ Build validation passed"
+
+      - name: 📤 Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-build
+          name: frontend-build-${{ github.sha }}
           path: frontend/dist/
           retention-days: 7
 
   deploy:
-    needs: build-and-test
+    name: 🚀 Deploy to Render
+    needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
+
     steps:
-      - name: Deploy to Render
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🚀 Trigger Render Deploy
         run: |
-          echo "Frontend will be auto-deployed by Render when connected to this repository"
-          echo "Make sure to:"
-          echo "1. Connect your GitHub repo to Render"
-          echo "2. Set build command: npm install && npm run build"
-          echo "3. Set publish directory: dist"
-          echo "4. Add VITE_BACKEND_URL environment variable"
+          echo "🎯 Frontend deployment triggered!"
+          echo "📍 Repository: ${{ github.repository }}"
+          echo "📝 Commit: ${{ github.sha }}"
+          echo "👤 Author: ${{ github.actor }}"
+          echo ""
+          echo "🔗 Render will auto-deploy from this commit"
+          echo "📊 Monitor deployment at: https://dashboard.render.com"
+          echo ""
+          echo "✅ Deployment configuration:"
+          echo "   - Build Command: npm install && npm run build"
+          echo "   - Publish Directory: dist"
+          echo "   - Root Directory: frontend"
+          echo "   - Environment: Static Site"

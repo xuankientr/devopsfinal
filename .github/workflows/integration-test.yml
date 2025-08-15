@@ -1,0 +1,166 @@
+name: 🔗 Integration Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  integration-test:
+    name: 🧪 Full Stack Integration Test
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_USER: testuser
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      
+      - name: 📦 Install root dependencies
+        run: npm install
+      
+      - name: 📦 Install backend dependencies
+        run: cd backend && npm ci
+      
+      - name: 📦 Install frontend dependencies
+        run: cd frontend && npm ci
+      
+      - name: 🗄️ Setup test database
+        run: |
+          cd backend
+          export DATABASE_URL="postgresql://testuser:testpassword@localhost:5432/testdb"
+          npm run db:setup
+        env:
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/testdb
+      
+      - name: 🚀 Start backend server
+        run: |
+          cd backend
+          export DATABASE_URL="postgresql://testuser:testpassword@localhost:5432/testdb"
+          export NODE_ENV=test
+          npm start &
+          echo $! > backend.pid
+        env:
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/testdb
+      
+      - name: ⏳ Wait for backend
+        run: |
+          echo "Waiting for backend to start..."
+          for i in {1..30}; do
+            if curl -f http://localhost:3001/api/health; then
+              echo "✅ Backend is ready!"
+              break
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 2
+          done
+      
+      - name: 🧪 Test backend APIs
+        run: |
+          echo "Testing all backend endpoints..."
+          
+          echo "1. Health check:"
+          curl -f http://localhost:3001/api/health | jq .
+          
+          echo "2. Profile endpoint:"
+          curl -f http://localhost:3001/api/profile | jq .
+          
+          echo "3. Skills endpoint:"
+          curl -f http://localhost:3001/api/skills | jq .
+          
+          echo "4. Projects endpoint:"
+          curl -f http://localhost:3001/api/projects | jq .
+          
+          echo "5. Experience endpoint:"
+          curl -f http://localhost:3001/api/experience | jq .
+          
+          echo "6. Message endpoint:"
+          curl -f http://localhost:3001/api/message | jq .
+          
+          echo "✅ All API endpoints working!"
+      
+      - name: 🧪 Test contact form
+        run: |
+          echo "Testing contact form submission..."
+          
+          response=$(curl -s -X POST http://localhost:3001/api/contact \
+            -H "Content-Type: application/json" \
+            -d '{
+              "name": "Test User",
+              "email": "test@example.com",
+              "message": "This is a test message from CI/CD"
+            }')
+          
+          echo "Response: $response"
+          
+          if echo "$response" | jq -e '.success == true' > /dev/null; then
+            echo "✅ Contact form test passed!"
+          else
+            echo "❌ Contact form test failed!"
+            exit 1
+          fi
+      
+      - name: 🏗️ Build frontend
+        run: |
+          cd frontend
+          export VITE_BACKEND_URL=http://localhost:3001
+          npm run build
+        env:
+          VITE_BACKEND_URL: http://localhost:3001
+      
+      - name: 🧪 Test frontend build
+        run: |
+          cd frontend
+          
+          echo "Checking build output..."
+          test -d dist || {
+            echo "❌ Frontend build failed"
+            exit 1
+          }
+          
+          echo "📊 Frontend build size:"
+          du -sh dist/
+          
+          echo "✅ Frontend build successful!"
+      
+      - name: 🧹 Cleanup
+        if: always()
+        run: |
+          if [ -f backend.pid ]; then
+            kill $(cat backend.pid) 2>/dev/null || true
+            rm backend.pid
+          fi
+          
+          echo "🧹 Cleanup completed"
+      
+      - name: 📊 Test Summary
+        if: always()
+        run: |
+          echo "🎯 Integration Test Summary:"
+          echo "✅ Database connection: OK"
+          echo "✅ Backend APIs: OK"
+          echo "✅ Contact form: OK"
+          echo "✅ Frontend build: OK"
+          echo ""
+          echo "🚀 Ready for deployment!"

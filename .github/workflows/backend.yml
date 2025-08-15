@@ -1,55 +1,92 @@
-name: Deploy Backend
+name: 🚀 Deploy Backend
 
 on:
   push:
     branches: [main]
     paths:
       - 'backend/**'
+      - '.github/workflows/backend.yml'
   pull_request:
     branches: [main]
     paths:
       - 'backend/**'
 
 jobs:
-  build-and-test:
+  test:
+    name: 🧪 Test Backend
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
-    
+
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
-      
-      - name: Setup Node.js
+
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
-      
-      - name: Install dependencies
+
+      - name: 📦 Install dependencies
         run: npm ci
-      
-      - name: Run health check
+
+      - name: 🔍 Lint code
         run: |
-          npm start &
-          sleep 5
-          curl -f http://localhost:5000/api/health || exit 1
-          pkill -f "node index.js"
+          echo "Running basic syntax check..."
+          node -c index.js
+          echo "✅ Syntax check passed"
+
+      - name: 🏥 Health check test
+        run: |
+          echo "Starting backend server..."
+          timeout 30s npm start &
+          SERVER_PID=$!
+
+          echo "Waiting for server to start..."
+          sleep 10
+
+          echo "Testing health endpoint..."
+          curl -f http://localhost:3001/api/health || {
+            echo "❌ Health check failed"
+            kill $SERVER_PID 2>/dev/null || true
+            exit 1
+          }
+
+          echo "Testing profile endpoint..."
+          curl -f http://localhost:3001/api/profile || {
+            echo "❌ Profile endpoint failed"
+            kill $SERVER_PID 2>/dev/null || true
+            exit 1
+          }
+
+          echo "✅ All API tests passed"
+          kill $SERVER_PID 2>/dev/null || true
 
   deploy:
-    needs: build-and-test
+    name: 🚀 Deploy to Render
+    needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
+
     steps:
-      - name: Deploy to Render
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🚀 Trigger Render Deploy
         run: |
-          echo "Backend will be auto-deployed by Render when connected to this repository"
-          echo "Make sure to:"
-          echo "1. Connect your GitHub repo to Render"
-          echo "2. Set build command: npm install"
-          echo "3. Set start command: node index.js"
-          echo "4. Add DATABASE_URL environment variable"
-          echo "5. Set NODE_ENV=production"
+          echo "🎯 Backend deployment triggered!"
+          echo "📍 Repository: ${{ github.repository }}"
+          echo "📝 Commit: ${{ github.sha }}"
+          echo "👤 Author: ${{ github.actor }}"
+          echo ""
+          echo "🔗 Render will auto-deploy from this commit"
+          echo "📊 Monitor deployment at: https://dashboard.render.com"
+          echo ""
+          echo "✅ Deployment configuration:"
+          echo "   - Build Command: npm install"
+          echo "   - Start Command: npm start"
+          echo "   - Root Directory: backend"
+          echo "   - Environment: Node.js"

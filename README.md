@@ -46,7 +46,10 @@ project-root/
 ### DevOps
 - ✅ **CI/CD Pipeline** - GitHub Actions for automated testing and deployment
 - ✅ **Auto Deploy** - Automatic deployment to Render on push
+- ✅ **Integration Tests** - Full stack testing with PostgreSQL
 - ✅ **Environment Configuration** - Proper environment variable management
+- ✅ **Build Validation** - Automated build and API testing
+- ✅ **Deployment Monitoring** - Real-time deployment status
 
 ## 🛠️ Local Development
 
@@ -101,11 +104,35 @@ npm run dev
 
 ## 🔄 CI/CD Pipeline
 
-The project includes GitHub Actions workflows that:
+The project includes comprehensive GitHub Actions workflows:
 
-- **Frontend Pipeline**: Builds and tests the React app on every push
-- **Backend Pipeline**: Tests the Node.js API and validates health endpoints
-- **Auto Deploy**: Render automatically deploys when you push to main branch
+### 🎨 Frontend Pipeline (`.github/workflows/frontend.yml`)
+- **Triggers**: Push/PR to `frontend/**` or workflow file changes
+- **Tests**: Package validation, build testing, artifact upload
+- **Build**: Creates optimized production build with environment variables
+- **Deploy**: Auto-deploy to Render Static Site
+
+### 🚀 Backend Pipeline (`.github/workflows/backend.yml`)
+- **Triggers**: Push/PR to `backend/**` or workflow file changes
+- **Tests**: Syntax validation, API health checks, endpoint testing
+- **Validation**: Ensures all API endpoints respond correctly
+- **Deploy**: Auto-deploy to Render Web Service
+
+### 🔗 Integration Tests (`.github/workflows/integration-test.yml`)
+- **Full Stack Testing**: Tests complete application flow
+- **Database**: Spins up PostgreSQL for realistic testing
+- **API Testing**: Validates all endpoints including contact form
+- **Build Validation**: Ensures frontend builds with backend integration
+
+### 🧪 Local Testing
+```bash
+# Run local tests before pushing
+test-local.bat        # Windows
+./test-local.sh       # Linux/Mac
+
+# Or test individual components
+npm run dev           # Start both frontend and backend
+```
 
 ## 📝 Environment Variables
 
