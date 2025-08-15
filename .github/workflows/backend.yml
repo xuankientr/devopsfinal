@@ -1,0 +1,55 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run health check
+        run: |
+          npm start &
+          sleep 5
+          curl -f http://localhost:5000/api/health || exit 1
+          pkill -f "node index.js"
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Deploy to Render
+        run: |
+          echo "Backend will be auto-deployed by Render when connected to this repository"
+          echo "Make sure to:"
+          echo "1. Connect your GitHub repo to Render"
+          echo "2. Set build command: npm install"
+          echo "3. Set start command: node index.js"
+          echo "4. Add DATABASE_URL environment variable"
+          echo "5. Set NODE_ENV=production"
